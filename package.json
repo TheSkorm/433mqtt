@@ -1,0 +1,15 @@
+{
+  "name": "433",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "homeduino": "0.0.61",
+    "mqtt": "^1.14.1"
+  }
+}

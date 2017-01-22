@@ -5,7 +5,10 @@ Board = homeduino.Board
 board = new Board("serialport", {serialDevice:'/dev/serial/by-path/platform-3f980000.usb-usb-0:1.3:1.0-port0', baudrate: 115200})
 var boardReady = false
 
-var client  = mqtt.connect('mqtt://localhost:1883');
+
+config_json = require("./config.json")
+
+var client  = mqtt.connect('mqtt://localhost:1883', {username:config_json.user, password:config_json.pass});
 
 var baseTopic = "homeduino"
 var homeduinoTimout = 5000

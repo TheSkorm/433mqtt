@@ -1,0 +1,21 @@
+{
+  "port" : "/dev/ttyAMA0",
+  "baud": 115200,
+  "mqtt": {
+    "username": "hass",
+    "password": "hass"
+  },
+  "basetopic": "input",
+  "rf": {
+    "receivepin": 0,
+    "sendpin": 4,
+    "repeats": 3,
+    "statesuffix": "",
+    "rxsuffix": "",
+    "legacyrx": true
+  },
+  "dht": {
+    "model": 22,
+    "pin": 13
+  }
+}

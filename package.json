@@ -9,7 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "homeduino": "git://github.com/pimatic/homeduinojs.git",
+    "ini": "^1.3.4",
     "mqtt": "^1.14.1",
-    "homeduino": "git://github.com/pimatic/homeduinojs.git"
+    "nconf": "^0.8.5"
   }
 }

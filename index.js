@@ -1,49 +1,53 @@
 var mqtt = require('mqtt');
-
+var nconf = require('nconf');
 homeduino = require('homeduino')
+
+
+nconf.argv()
+  .env()
+  .file({ file: '/etc/433mqtt.json' })
+  .file({ file: './config.default.json'});
+
 Board = homeduino.Board
-board = new Board("serialport", {serialDevice:'/dev/serial/by-path/platform-3f980000.usb-usb-0:1.3:1.0-port0', baudrate: 115200})
+board = new Board("serialport", {serialDevice: nconf.get('port'), baudrate:  nconf.get('baud')})
 var boardReady = false
 
 
-config_json = require("./config.json")
 
-var client  = mqtt.connect('mqtt://localhost:1883', {username:config_json.user, password:config_json.pass});
+var client  = mqtt.connect('mqtt://localhost:1883',  nconf.get('mqtt'));
 
-var baseTopic = "homeduino"
+var baseTopic = nconf.get('basetopic');
 var homeduinoTimout = 5000
-var hasDHT11 = false
-var receivePin = 1
-var sendPin = 11
-var defaultRepeats = 7
+var receivePin = nconf.get('rf:receivepin')
+var sendPin = nconf.get('rf:sendpin')
+var defaultRepeats = nconf.get('rf:repeats')
 
+// input/switch15/124333/0
 function topicToProtocol (topic) {
-  var topicIdx = 2
-  var protocol = topic.split("/")[topicIdx++]
+  var topicIdx = 1
+  var protocol = topic.split("/")[0]
 
   var options = {}
 
-  if (topic.split("/")[topicIdx] === "channel") {
-    ++topicIdx
-    options.channel = topic.split("/")[topicIdx++]
+  if (topic.split("/")[2] === "channel") {
+    options.channel = topic.split("/")[3]
   }
-
-  if (topic.split("/")[topicIdx] === "id") {
-    ++topicIdx
-    options.id = topic.split("/")[topicIdx++]
+  else if (topic.split("/")[1] === "id") {
+    options.id = topic.split("/")[2]
+  } else {
+    options.id = topic.split("/")[1]
   }
 
   if (topic.split("/")[topicIdx] === "unit") {
     ++topicIdx
     options.unit = topic.split("/")[topicIdx++]
   }
-
   return {protocol: protocol, options: options}
 }
 
 function protocolToTopic (protocol, options)
 {
-  topic = baseTopic + "/rx/" + protocol
+  topic = baseTopic + nconf.get('rf:rxsuffix') +"/" + protocol
 
   if (options.channel != undefined) {
     topic += "/channel/" + options.channel
@@ -63,13 +67,11 @@ client.on('connect', function () {
 });
 
 board.on("rfReceive", function(event){
-  //console.log ('received:', event.pulseLengths, event.pulses)
 })
 
 board.on("rf", function(event){
 
   try {
-    //console.log(event)
 
     var topic = protocolToTopic(event.protocol, event.values);
     var payload = ""
@@ -85,9 +87,11 @@ board.on("rf", function(event){
     if (event.values.contact != undefined) {
       payload = "\"contact\":" + event.values.contact + "}"
     }
-
-    //console.log(topic + " - " + payload)
-    client.publish(topic, payload);
+    if (!(nconf.get('rf:legacyrx'))){
+      client.publish(topic, payload);
+    } else {
+      client.publish(event.protocol + "/" + event.values.id, event.values.state.toString());
+    }
   } catch (e) { console.log(e)};
 })
 
@@ -97,10 +101,10 @@ board.connect(homeduinoTimout).then( function() {
 
   board.rfControlStartReceiving(receivePin).then( function(){
     console.log ("receiving...")
-    if (hasDHT11) {
+    if ( nconf.get('dht')) {
       tempInterval = setInterval(function() {
         try {
-          board.readDHT(11, 13).then( function(ret) {
+          board.readDHT( nconf.get('dht:model'),  nconf.get('dht:pin')).then( function(ret) {
             client.publish("/dht11/temperature", ret.temperature.toString());
             client.publish("/dht11/humidity", ret.humidity.toString());
           })
@@ -113,20 +117,17 @@ board.connect(homeduinoTimout).then( function() {
 
 client.on('message', function (topic, message) {
   try {
-    // message is Buffer
-    //console.log("topic: " + topic)
-    //console.log("message: " + message)
 
-    if (!topic.startsWith(baseTopic + "/tx/") || topic.endsWith("/state") || !boardReady) 
+    if (!topic.startsWith(baseTopic + nconf.get('rf:statesuffix')) || topic.endsWith("/state") || !boardReady) 
     {
-      //console.log("ignoring")
       return
     }
 
     payloadJson = JSON.parse(message)
     rfRepeats = defaultRepeats
-    
-    var protocolOptions = topicToProtocol(topic)
+
+    var r = new RegExp("^" + baseTopic +"/");
+    var protocolOptions = topicToProtocol(topic.replace(r,""))
 
     if (payloadJson["state"] != undefined) {
       protocolOptions.options.state = payloadJson["state"]
@@ -136,17 +137,16 @@ client.on('message', function (topic, message) {
       protocolOptions.options.command = payloadJson["command"]
     }
 
+    if (payloadJson["command"] == undefined && payloadJson["state"] == undefined){
+      protocolOptions.options.state = payloadJson
+    }
+
     if (payloadJson["rfRepeats"] != undefined) {
       rfRepeats = payloadJson["rfRepeats"]
     }
 
-    //console.log("protocol: " + protocolOptions.protocol)
-    //console.log(protocolOptions.options)
-    //console.log("rfRepeats:" + rfRepeats)
     board.rfControlSendMessage(sendPin, rfRepeats, protocolOptions.protocol, protocolOptions.options).then( function() {
       statTopic = topic + "/state"
-
-      //console.log("sending stat for " + statTopic)
       client.publish(statTopic, message, {retain: true})
     });
   } catch (e) { console.log(e)};

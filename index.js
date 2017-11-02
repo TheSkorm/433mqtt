@@ -5,8 +5,8 @@ homeduino = require('homeduino')
 
 nconf.argv()
   .env()
-  .file({ file: '/etc/433mqtt.json' })
-  .file({ file: './config.default.json'});
+  .file('user', '/etc/433mqtt.json')
+  .file('default', './config.default.json');
 
 Board = homeduino.Board
 board = new Board("serialport", {serialDevice: nconf.get('port'), baudrate:  nconf.get('baud')})

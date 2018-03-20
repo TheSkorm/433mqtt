@@ -14,7 +14,7 @@ var boardReady = false
 
 
 
-var client  = mqtt.connect('mqtt://localhost:1883',  nconf.get('mqtt'));
+var client  = mqtt.connect('mqtt://core-mosquitto:1883',  nconf.get('mqtt'));
 
 var baseTopic = nconf.get('basetopic');
 var homeduinoTimout = 5000

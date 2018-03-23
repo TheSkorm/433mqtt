@@ -1,0 +1,14 @@
+{
+    "name": "433MHz MQTT Server",
+    "version": "1",
+    "slug": "433mqtt",
+    "description": "Runs a 433mqtt server to pass homeduino commands to homeassistant",
+    "startup": "before",
+    "boot": "auto",
+    "auto_uart": true,
+    "host_network": true,
+    "options": {
+      
+    },
+    "schema": {}
+  }

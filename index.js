@@ -24,24 +24,47 @@ var defaultRepeats = nconf.get('rf:repeats')
 
 // input/switch15/124333/0
 function topicToProtocol (topic) {
-  var topicIdx = 1
-  var protocol = topic.split("/")[0]
+  var topicIdx = 0
+  var protocol = topic.split("/")[topicIdx]
 
   var options = {}
 
-  if (topic.split("/")[2] === "channel") {
-    options.channel = topic.split("/")[3]
-  }
-  else if (topic.split("/")[1] === "id") {
-    options.id = topic.split("/")[2]
+  topicIdx++; // go to next field
+
+  if (topic.split("/")[topicIdx] === "id") {
+    // found an "id" string, next part between slashes is the actual id
+    topicIdx++; // go to next field
+    options.id = topic.split("/")[topicIdx]
   } else {
-    options.id = topic.split("/")[1]
+    // it was not an "id" string, the field itself is the id
+    options.id = topic.split("/")[topicIdx]
   }
 
-  if (topic.split("/")[topicIdx] === "unit") {
-    ++topicIdx
-    options.unit = topic.split("/")[topicIdx++]
+  topicIdx++; // go to next field
+
+  if (topic.split("/")[topicIdx] === "channel") {
+    // found a "channel" string, next part between slashes is the actual channel
+    topicIdx++; // go to next field
+    options.channel = topic.split("/")[topicIdx]
+  } else {
+    // it was not a "channel" string, the field itself is the unit, not the channel!
+    options.unit = topic.split("/")[topicIdx]
   }
+
+  topicIdx++; // go to next field
+
+  // check if we have tokens left to parse
+  if (topicIdx < topic.split("/").length) {
+    if (topic.split("/")[topicIdx] === "unit") {
+      // found a "unit" string, next part between slashes is the actual unit
+      topicIdx++; // go to next field
+      options.unit = topic.split("/")[topicIdx]
+    } else {
+      // it was not a "unit" string, the field itself is the unit
+      options.unit = topic.split("/")[topicIdx]
+    }
+  }
+
   return {protocol: protocol, options: options}
 }
 

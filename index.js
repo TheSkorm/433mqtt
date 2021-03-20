@@ -116,6 +116,8 @@ board.connect(homeduinoTimout).then( function() {
 
 
 client.on('message', function (topic, message) {
+  console.log(topic);
+console.log(message);
   try {
 
     if (!topic.startsWith(baseTopic + nconf.get('rf:statesuffix')) || topic.endsWith("/state") || !boardReady) 
@@ -125,7 +127,7 @@ client.on('message', function (topic, message) {
 
     payloadJson = JSON.parse(message)
     rfRepeats = defaultRepeats
-
+    console.log(payloadJson);
     var r = new RegExp("^" + baseTopic +"/");
     var protocolOptions = topicToProtocol(topic.replace(r,""))
 
@@ -145,6 +147,9 @@ client.on('message', function (topic, message) {
       rfRepeats = payloadJson["rfRepeats"]
     }
 
+
+    console.log("///")
+    console.log(protocolOptions)
     board.rfControlSendMessage(sendPin, rfRepeats, protocolOptions.protocol, protocolOptions.options).then( function() {
       statTopic = topic + "/state"
       client.publish(statTopic, message, {retain: true})

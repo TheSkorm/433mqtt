@@ -10,5 +10,6 @@
     "options": {
       
     },
-    "schema": {}
+    "schema": {},
+    "arch": ["amd64"]
   }

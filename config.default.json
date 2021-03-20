@@ -1,5 +1,5 @@
 {
-  "port" : "/dev/ttyAMA0",
+  "port" : "/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0",
   "baud": 115200,
   "mqtt": {
     "username": "hass",
@@ -13,9 +13,5 @@
     "statesuffix": "",
     "rxsuffix": "",
     "legacyrx": true
-  },
-  "dht": {
-    "model": 22,
-    "pin": 13
   }
 }

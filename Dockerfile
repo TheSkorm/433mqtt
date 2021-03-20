@@ -1,10 +1,8 @@
-ARG BUILD_FROM
-FROM $BUILD_FROM
+FROM debian:latest
 
 ENV LANG C.UTF-8
 
-RUN apk add --update nodejs nodejs-npm git python
-RUN apk add --update make gcc g++ linux-headers udev
+RUN apt-get update; apt-get install -y nodejs npm git python2 build-essential
 RUN mkdir /433mqtt
 COPY config.default.json /433mqtt/
 COPY package.json /433mqtt/
